@@ -9,11 +9,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.MessageFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class UnclaimedEstatesList {
+
+	static String URL ="https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/{0}/UnclaimedEstatesList.csv";
+	static long id = 292366l;
+	
 	private static final String LINE_DELIMITER = System
 			.getProperty("line.separator");
 	private static String LAST_MODIFIED = null;
@@ -27,7 +32,16 @@ public class UnclaimedEstatesList {
 			currentFile = args[0];
 		}
 		try {
-			SourceList newList = downloadList();
+			SourceList newList = null; 
+			do {
+				try {
+					newList= downloadList();
+				} catch (IOException ioe) {
+					System.err.print(ioe.getMessage());
+				}
+				id++;
+			} while (newList==null && (id < (id + 1000)));
+			
 			SourceList currentList = readCurrentFile(currentFile);
 			if (!currentList.getReferences().isEmpty()) {
 				newList.compareTo(currentList);				
@@ -66,8 +80,7 @@ public class UnclaimedEstatesList {
 	private static SourceList downloadList()
 			throws IOException {
 		// https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/289134/UnclaimedEstatesList.csv
-		URL url = new URL(
-				"https://www.gov.uk/government/uploads/system/uploads/attachment_data/file/290181/UnclaimedEstatesList.csv");
+		URL url = new URL(MessageFormat.format(URL, Long.toString(id)));
 		URLConnection con = url.openConnection();
 		con.connect();
 		/*
